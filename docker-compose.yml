@@ -1,0 +1,48 @@
+# docker-compose.yml
+version: "3.8"
+services:
+  nginx:
+    container_name: nginx
+    build: ./docker/nginx
+    command: nginx -g "daemon off;"
+    links:
+      - php
+    ports:
+      - "80:80"
+    volumes:
+      - ./app:/var/www/html
+    networks:
+      - app-network
+
+  php:
+    container_name: php
+    build: ./docker/php
+    links:
+      - cache
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./app:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - app-network
+
+  cache:
+    container_name: redis
+    image: redis:6.2
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning #--requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    networks:
+      - app-network
+    volumes:
+      - cache:/data
+
+volumes:
+  cache:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
