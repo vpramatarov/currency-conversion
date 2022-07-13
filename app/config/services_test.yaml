@@ -1,0 +1,5 @@
+services:
+  test.api_platform.client:
+    class: ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase
+    arguments: ['@test.client']
+    public: true
