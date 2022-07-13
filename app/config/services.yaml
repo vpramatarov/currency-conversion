@@ -4,8 +4,6 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    redis.host: '%env(REDIS_HOST)%'
-    redis.port: '%env(REDIS_PORT)%'
     apilayerApiKey: '%env(APILAYER_KEY)%'
 
 services:
@@ -26,17 +24,6 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    Redis:
-        # you can also use \RedisArray, \RedisCluster or \Predis\Client classes
-        class: Redis
-        calls:
-            - connect:
-                  - '%env(REDIS_HOST)%'
-                  - '%env(int:REDIS_PORT)%'
-            # If your Redis server requires a password, uncomment the following lines:
-            # - auth:
-            #     - '%env(REDIS_PASSWORD)%'
-
     App\DataProvider\RateDataProvider:
         bind:
             $fetchService: '@App\Service\ApiLayerRateService'
@@ -48,10 +35,8 @@ services:
     App\Service\ApiLayerCurrencyService:
         bind:
             $apiKey: '%apilayerApiKey%'
-            $redis: '@Redis'
 
     App\Service\ApiLayerRateService:
         bind:
             $apiKey: '%apilayerApiKey%'
-            $redis: '@Redis'
 
