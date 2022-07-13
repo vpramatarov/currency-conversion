@@ -24,11 +24,6 @@ class Rate
 {
     /**
      * @ApiProperty(identifier=true)
-     * @Groups({"rate:read"})
-     * @Assert\Length(
-     *     min=6,
-     *     minMessage="Both currencies must be at least 3 characters long each"
-     * )
      */
     public string $pair;
 
@@ -61,9 +56,19 @@ class Rate
     public float $exchangeRate;
 
     /**
-     * @Groups({"rate:read"})
      * @Assert\NotBlank()
      */
-    public string $trend;
+    public string $suffix;
+
+
+    /**
+     * @Groups({"rate:read"})
+     * @Assert\NotBlank()
+     * @return string
+     */
+    public function getTrend(): string
+    {
+        return sprintf('%s %s', $this->exchangeRate, $this->suffix);
+    }
 
 }
