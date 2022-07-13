@@ -5,7 +5,8 @@ namespace App\Service;
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use \Redis;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 
 class ApiLayerCurrencyService implements FetchInterface
@@ -18,18 +19,18 @@ class ApiLayerCurrencyService implements FetchInterface
 
     private HttpClientInterface $httpClient;
 
-    private Redis $redis;
+    private CacheInterface $cache;
 
     /**
      * @param HttpClientInterface $httpClient
      * @param string $apiKey
-     * @param Redis $redis
+     * @param CacheInterface $cache
      */
-    public function __construct(HttpClientInterface $httpClient, string $apiKey, Redis $redis)
+    public function __construct(HttpClientInterface $httpClient, string $apiKey, CacheInterface $cache)
     {
         $this->httpClient = $httpClient;
         $this->apiKey = $apiKey;
-        $this->redis = $redis;
+        $this->cache = $cache;
     }
 
     /**
@@ -40,6 +41,7 @@ class ApiLayerCurrencyService implements FetchInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchOne($id): ?Currency
     {
@@ -60,6 +62,7 @@ class ApiLayerCurrencyService implements FetchInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchMany(): array
     {
@@ -80,14 +83,18 @@ class ApiLayerCurrencyService implements FetchInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchData(): array
     {
         $key = 'apilayer.currencies';
 
-        $data = $this->redis->get($key);
+        // The callable will only be executed on a cache miss.
+        $value = $this->cache->get($key, function (ItemInterface $item) {
 
-        if (!$data) {
+            $item->expiresAfter(self::TTL);
+
+            // ... do some HTTP request or heavy computations
             $response = $this->httpClient->request(
                 'GET',
                 self::API_URL,
@@ -104,13 +111,13 @@ class ApiLayerCurrencyService implements FetchInterface
             $data = $response->getContent();
 
             if ($statusCode !== 200 || !$data) {
-                return [];
+                return '';
             }
 
-            $this->redis->setex($key, self::TTL, $data); // cache the results
-        }
+            return $data;
+        });
 
-        $data = json_decode($data, true);
+        $data = json_decode($value, true);
 
         return $data['currencies'] ?? [];
     }

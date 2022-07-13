@@ -7,7 +7,8 @@ use ApiPlatform\Core\Validator\Exception\ValidationException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Contracts\FetchItemInterface;
 use App\Entity\Rate;
-use \Redis;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 
 class ApiLayerRateService implements FetchItemInterface
@@ -20,26 +21,26 @@ class ApiLayerRateService implements FetchItemInterface
 
     private HttpClientInterface $httpClient;
 
-    private Redis $redis;
+    private CacheInterface $cache;
 
     private ApiLayerCurrencyService $apiLayerCurrencyService;
 
     /**
      * @param HttpClientInterface $httpClient
      * @param string $apiKey
-     * @param Redis $redis
+     * @param CacheInterface $cache
      * @param ApiLayerCurrencyService $apiLayerCurrencyService
      */
     public function __construct(
         HttpClientInterface $httpClient,
         string $apiKey,
-        Redis $redis,
+        CacheInterface $cache,
         ApiLayerCurrencyService $apiLayerCurrencyService
     )
     {
         $this->httpClient = $httpClient;
         $this->apiKey = $apiKey;
-        $this->redis = $redis;
+        $this->cache = $cache;
         $this->apiLayerCurrencyService = $apiLayerCurrencyService;
     }
 
@@ -51,6 +52,7 @@ class ApiLayerRateService implements FetchItemInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      * @throws ValidationException
      */
     public function fetchOne($id): ?Rate
@@ -60,10 +62,12 @@ class ApiLayerRateService implements FetchItemInterface
         $ratesData = $this->validateData($id);
         $endDate = (new \DateTime('now'))->format('Y-m-d');
         $todayRate = $ratesData[$endDate] ?? [];
+        $todayExchangeRate = $todayRate[$pairKey];
 
-        if ($todayRate) {
+        if ($todayRate && $todayExchangeRate) {
             $todayRate['currencies'] = $currencies;
-            $todayRate['trend'] = $this->calculateTrend($ratesData, $todayRate[$pairKey], $pairKey);
+            $calculateTrendData = array_column($ratesData, $pairKey);
+            $todayRate['suffix'] = $this->calculateTrend($calculateTrendData, $todayExchangeRate);
 
             return $this->createRateObject($id, $todayRate);
         }
@@ -79,16 +83,16 @@ class ApiLayerRateService implements FetchItemInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     private function fetchData(array $currencies): array
     {
         $key = sprintf('apilayer.rate.%s', implode('', $currencies));
 
-        $data = $this->redis->get($key);
-
-        if (!$data) {
+        $value = $this->cache->get($key, function (ItemInterface $item) use ($currencies) {
+            $item->expiresAfter(self::TTL);
             $endDate = (new \DateTime('now'))->format('Y-m-d');
-            $startDate = (new \DateTime('now'))->modify('-10 days')->format('Y-m-d');
+            $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
 
             $response = $this->httpClient->request(
                 'GET',
@@ -112,13 +116,13 @@ class ApiLayerRateService implements FetchItemInterface
             $data = $response->getContent();
 
             if ($statusCode !== 200 || !$data) {
-                return [];
+                return '';
             }
 
-            $this->redis->setex($key, self::TTL, $data);
-        }
+            return $data;
+        });
 
-        $data = json_decode($data, true);
+        $data = json_decode($value, true);
 
         return $data['quotes'] ?? [];
     }
@@ -136,8 +140,8 @@ class ApiLayerRateService implements FetchItemInterface
         $rate->pair = $pair;
         $rate->base = $ratesData['currencies'][0];
         $rate->target = $ratesData['currencies'][1];
-        $rate->exchangeRate = $ratesData[$pairKey];
-        $rate->trend = $ratesData['trend'];
+        $rate->exchangeRate = (float) sprintf('%.3f', $ratesData[$pairKey]);
+        $rate->suffix = $ratesData['suffix'];
 
         return $rate;
     }
@@ -146,32 +150,24 @@ class ApiLayerRateService implements FetchItemInterface
      * Calculate average in array
      *
      * @param array $data
-     * @return null
+     * @return float
      */
-    private function array_average(array $data)
+    private function arrayAverage(array $data): float
     {
         $data = array_filter($data, 'is_numeric'); // filter out non-numeric values
+        $avg = array_sum($data) / count($data);
 
-        $carry = null;
-        $count = count($data);
-        return array_reduce(
-            $data,
-            function ($carried, $value) use ($count) {
-                return (float) sprintf('%.6f', ($carried === null ? 0 : $carried) + ($value / $count));
-            },
-            $carry
-        );
+        return (float) sprintf('%.3f', $avg);
     }
 
     /**
      * @param array $data
      * @param float $todayExchangeRate
-     * @param string $rateKey
      * @return string
      */
-    private function calculateTrend(array $data, float $todayExchangeRate, string $rateKey): string
+    private function calculateTrend(array $data, float $todayExchangeRate): string
     {
-        $avg = $this->array_average(array_column($data, $rateKey));
+        $avg = $this->arrayAverage($data);
 
         $trendSign = '-';
 
@@ -192,6 +188,7 @@ class ApiLayerRateService implements FetchItemInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Psr\Cache\InvalidArgumentException
      * @throws ValidationException
      */
     private function validateData(string $id): array
