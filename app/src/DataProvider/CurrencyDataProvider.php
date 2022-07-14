@@ -2,23 +2,29 @@
 
 namespace App\DataProvider;
 
-use ApiPlatform\Core\DataProvider\CollectionDataProviderInterface;
+use ApiPlatform\Core\DataProvider\ContextAwareCollectionDataProviderInterface;
 use ApiPlatform\Core\DataProvider\ItemDataProviderInterface;
 use ApiPlatform\Core\DataProvider\RestrictedDataProviderInterface;
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 
-class CurrencyDataProvider implements ItemDataProviderInterface, CollectionDataProviderInterface, RestrictedDataProviderInterface
+class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCollectionDataProviderInterface, RestrictedDataProviderInterface
 {
-    private FetchInterface $fetchService;
-
     /**
-     * @param FetchInterface $fetchService
+     * @var FetchInterface[]
      */
-    public function __construct(FetchInterface $fetchService)
+    private iterable $fetchServices;
+
+
+    public function __construct(iterable $fetchServices)
     {
-        $this->fetchService = $fetchService;
+        foreach ($fetchServices as $services) {
+            foreach ($services as $service) {
+                $this->fetchServices[] = $service;
+            }
+        }
     }
+
 
     /**
      * @param string $resourceClass
@@ -29,17 +35,38 @@ class CurrencyDataProvider implements ItemDataProviderInterface, CollectionDataP
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Currency
     {
-        return $this->fetchService->fetchOne($id);
+        $provider = $context['_provider'] ?? '';
+
+        if (!empty($provider)) {
+            foreach($this->fetchServices as $fetchService) {
+                if ($fetchService->supports($provider)) {
+                    return $fetchService->fetchOne($id);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
      * @param string $resourceClass
      * @param string|null $operationName
+     * @param array $context
      * @return iterable
      */
-    public function getCollection(string $resourceClass, string $operationName = null): iterable
+    public function getCollection(string $resourceClass, string $operationName = null, array $context = []): iterable
     {
-        return $this->fetchService->fetchMany();
+        $provider = $context['_provider'] ?? '';
+
+        if (!empty($provider)) {
+            foreach($this->fetchServices as $fetchService) {
+                if ($fetchService->supports($provider)) {
+                    return $fetchService->fetchMany();
+                }
+            }
+        }
+
+        return [];
     }
 
     /**

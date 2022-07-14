@@ -10,14 +10,19 @@ use App\Entity\Rate;
 class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProviderInterface
 {
 
-    private FetchItemInterface $fetchService;
-
     /**
-     * @param FetchItemInterface $fetchService
+     * @var FetchItemInterface[]
      */
-    public function __construct(FetchItemInterface $fetchService)
+    private iterable $fetchServices;
+
+
+    public function __construct(iterable $fetchServices)
     {
-        $this->fetchService = $fetchService;
+        foreach ($fetchServices as $services) {
+            foreach ($services as $service) {
+                $this->fetchServices[] = $service;
+            }
+        }
     }
 
     /**
@@ -29,7 +34,17 @@ class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProvi
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Rate
     {
-        return $this->fetchService->fetchOne($id);
+        $provider = $context['_provider'] ?? '';
+
+        if (!empty($provider)) {
+            foreach($this->fetchServices as $fetchService) {
+                if ($fetchService->supports($provider)) {
+                    return $fetchService->fetchOne($id);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

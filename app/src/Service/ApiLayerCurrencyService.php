@@ -13,6 +13,8 @@ class ApiLayerCurrencyService implements FetchInterface
 {
     private const API_URL = 'https://api.apilayer.com/currency_data/list';
 
+    private const PROVIDER = 'CURRENCY.APILAYER';
+
     private const TTL = 86400; // seconds in day
 
     private string $apiKey;
@@ -129,7 +131,15 @@ class ApiLayerCurrencyService implements FetchInterface
      */
     public function createCurrencyObject(string $symbol, string $name): Currency
     {
-        return new Currency($symbol, $name);
+        return new Currency($symbol, self::PROVIDER, $name);
     }
 
+    /**
+     * @param string $provider
+     * @return bool
+     */
+    public function supports(string $provider): bool
+    {
+        return strtoupper($provider) === self::PROVIDER;
+    }
 }

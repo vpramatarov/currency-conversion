@@ -15,6 +15,8 @@ class ApiLayerRateService implements FetchItemInterface
 {
     private const API_URL = 'https://api.apilayer.com/currency_data/timeframe';
 
+    private const PROVIDER = 'RATE.APILAYER';
+
     private const TTL = 3600; // seconds in hour
 
     private string $apiKey;
@@ -70,6 +72,7 @@ class ApiLayerRateService implements FetchItemInterface
         $todayExchangeRate = $todayRate[$pairKey];
 
         if ($todayRate && $todayExchangeRate) {
+
             $todayRate['currencies'] = $currencies;
             $calculateTrendData = array_column($ratesData, $pairKey);
             $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
@@ -143,6 +146,7 @@ class ApiLayerRateService implements FetchItemInterface
 
         $rate = new Rate();
         $rate->pair = $pair;
+        $rate->provider = self::PROVIDER;
         $rate->base = $ratesData['currencies'][0];
         $rate->target = $ratesData['currencies'][1];
         $rate->exchangeRate = (float) sprintf('%.3f', $ratesData[$pairKey]);
@@ -189,4 +193,12 @@ class ApiLayerRateService implements FetchItemInterface
         return $this->fetchData($currencies);
     }
 
+    /**
+     * @param string $provider
+     * @return bool
+     */
+    public function supports(string $provider): bool
+    {
+        return strtoupper($provider) === self::PROVIDER;
+    }
 }
