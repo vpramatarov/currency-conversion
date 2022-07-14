@@ -8,6 +8,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class ApiLayerRateServiceTest extends CustomApiTestCase
 {
+    private const PROVIDER = 'APILAYER';
 
     public function testCacheIsWorking()
     {
@@ -66,7 +67,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
             '/api/rates/CAD_CHF',
             [
                 'query' => [
-                    '_provider' => 'APILAYER'
+                    '_provider' => self::PROVIDER
                 ]
             ]
         );
@@ -83,7 +84,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
             '/api/rates/CA_CHF',
             [
                 'query' => [
-                    '_provider' => 'APILAYER'
+                    '_provider' => self::PROVIDER
                 ]
             ]
         );
@@ -100,7 +101,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
             '/api/rates/ASD_CHF',
             [
                 'query' => [
-                    '_provider' => 'APILAYER'
+                    '_provider' => self::PROVIDER
                 ]
             ]
         );
