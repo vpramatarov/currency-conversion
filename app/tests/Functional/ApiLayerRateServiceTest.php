@@ -57,4 +57,55 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
         }
     }
 
+    public function testGetRateRequest()
+    {
+        $client = static::createClient();
+
+        $res = $client->request(
+            'GET',
+            '/api/rates/CAD_CHF',
+            [
+                'query' => [
+                    '_provider' => 'APILAYER'
+                ]
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function testGetRateMalformedRequest()
+    {
+        $client = static::createClient();
+
+        $client->request(
+            'GET',
+            '/api/rates/CA_CHF',
+            [
+                'query' => [
+                    '_provider' => 'APILAYER'
+                ]
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(500);
+    }
+
+    public function testRateNotFound()
+    {
+        $client = static::createClient();
+
+        $client->request(
+            'GET',
+            '/api/rates/ASD_CHF',
+            [
+                'query' => [
+                    '_provider' => 'APILAYER'
+                ]
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
 }
