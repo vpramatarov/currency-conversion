@@ -61,7 +61,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
     {
         $client = static::createClient();
 
-        $res = $client->request(
+        $client->request(
             'GET',
             '/api/rates/CAD_CHF',
             [
