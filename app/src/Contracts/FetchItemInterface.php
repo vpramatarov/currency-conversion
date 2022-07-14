@@ -2,7 +2,7 @@
 
 namespace App\Contracts;
 
-interface FetchItemInterface
+interface FetchItemInterface extends ProviderInterface
 {
     public function fetchOne($id);
 }
