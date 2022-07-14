@@ -15,7 +15,20 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "groups"={"rate:read"}
  *     },
  *     itemOperations={
- *          "get"
+ *          "get"={
+ *              "openapi_context"={
+ *                  "parameters"={
+ *                      {
+ *                          "name"="_provider",
+ *                          "in"="query",
+ *                          "description"="Set Provider. Currently supports APILAYER. Default: 'APILAYER'",
+ *                          "schema"={
+ *                              "type"="string"
+ *                          }
+ *                      }
+ *                  }
+ *               }
+ *          }
  *     },
  *     collectionOperations={}
  * )
@@ -23,9 +36,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Rate
 {
     /**
-     * @ApiProperty(identifier=true)
+     * 2 currency codes separated by underscore. Ex: 'CAD_CHF'.
+     *
+     * @ApiProperty(identifier=true, openapiContext={"description"="test"})
      */
     public string $pair;
+
+    /**
+     * @Assert\NotBlank()
+     */
+    public string $provider;
 
     /**
      * @Groups({"rate:read"})

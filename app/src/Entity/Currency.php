@@ -15,10 +15,36 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "groups"={"currency:read"}
  *     },
  *     itemOperations={
- *          "get"
+ *          "get"={
+ *              "openapi_context"={
+ *                  "parameters"={
+ *                      {
+ *                          "name"="_provider",
+ *                          "in"="query",
+ *                          "description"="Set Provider. Currently supports APILAYER. Default: 'APILAYER'",
+ *                          "schema"={
+ *                              "type"="string"
+ *                          }
+ *                      }
+ *                  }
+ *               }
+ *          }
  *     },
  *     collectionOperations={
- *          "get"
+ *          "get"={
+ *              "openapi_context"={
+ *                  "parameters"={
+ *                      {
+ *                          "name"="_provider",
+ *                          "in"="query",
+ *                          "description"="Set Provider. Currently supports APILAYER. Default: 'APILAYER'",
+ *                          "schema"={
+ *                              "type"="string"
+ *                          }
+ *                      }
+ *                  }
+ *               }
+ *          }
  *     }
  * )
  */
@@ -32,6 +58,11 @@ class Currency
     public string $symbol;
 
     /**
+     * @Assert\NotBlank()
+     */
+    public string $provider;
+
+    /**
      * @Groups({"currency:read"})
      * @Assert\NotBlank()
      */
@@ -39,11 +70,13 @@ class Currency
 
     /**
      * @param string $symbol
+     * @param string $provider
      * @param string $name
      */
-    public function __construct(string $symbol, string $name)
+    public function __construct(string $symbol, string $provider, string $name)
     {
         $this->symbol = $symbol;
+        $this->provider = $provider;
         $this->name = $name;
     }
 
