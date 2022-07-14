@@ -25,23 +25,28 @@ class ApiLayerRateService implements FetchItemInterface
 
     private ApiLayerCurrencyService $apiLayerCurrencyService;
 
+    private HelperService $helperService;
+
     /**
      * @param HttpClientInterface $httpClient
      * @param string $apiKey
      * @param CacheInterface $cache
      * @param ApiLayerCurrencyService $apiLayerCurrencyService
+     * @param HelperService $helperService
      */
     public function __construct(
         HttpClientInterface $httpClient,
         string $apiKey,
         CacheInterface $cache,
-        ApiLayerCurrencyService $apiLayerCurrencyService
+        ApiLayerCurrencyService $apiLayerCurrencyService,
+        HelperService $helperService
     )
     {
         $this->httpClient = $httpClient;
         $this->apiKey = $apiKey;
         $this->cache = $cache;
         $this->apiLayerCurrencyService = $apiLayerCurrencyService;
+        $this->helperService = $helperService;
     }
 
     /**
@@ -67,7 +72,7 @@ class ApiLayerRateService implements FetchItemInterface
         if ($todayRate && $todayExchangeRate) {
             $todayRate['currencies'] = $currencies;
             $calculateTrendData = array_column($ratesData, $pairKey);
-            $todayRate['suffix'] = $this->calculateTrend($calculateTrendData, $todayExchangeRate);
+            $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
 
             return $this->createRateObject($id, $todayRate);
         }
@@ -144,40 +149,6 @@ class ApiLayerRateService implements FetchItemInterface
         $rate->suffix = $ratesData['suffix'];
 
         return $rate;
-    }
-
-    /**
-     * Calculate average in array
-     *
-     * @param array $data
-     * @return float
-     */
-    private function arrayAverage(array $data): float
-    {
-        $data = array_filter($data, 'is_numeric'); // filter out non-numeric values
-        $avg = array_sum($data) / count($data);
-
-        return (float) sprintf('%.3f', $avg);
-    }
-
-    /**
-     * @param array $data
-     * @param float $todayExchangeRate
-     * @return string
-     */
-    private function calculateTrend(array $data, float $todayExchangeRate): string
-    {
-        $avg = $this->arrayAverage($data);
-
-        $trendSign = '-';
-
-        if ($avg > $todayExchangeRate) {
-            $trendSign = '↑';
-        } else if ($avg < $todayExchangeRate) {
-            $trendSign = '↓';
-        }
-
-        return $trendSign;
     }
 
     /**
