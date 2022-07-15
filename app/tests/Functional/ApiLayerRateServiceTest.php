@@ -8,9 +8,6 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class ApiLayerRateServiceTest extends CustomApiTestCase
 {
-    private const PROVIDER = 'APILAYER';
-
-    private const APIKEY = '26JP7BPQbbdnNrS2wvaT1uMZ6SFx9g4C';
 
     public function testCacheIsWorking()
     {
@@ -63,39 +60,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
     public function testGetRateRequest()
     {
         $client = static::createClient();
-
-        // get currencies
-        $client->request(
-            'GET',
-            '/api/currencies',
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => self::APIKEY
-                ],
-                'query' => [
-                    '_provider' => self::PROVIDER
-                ]
-            ]
-        );
-
-        $this->assertResponseStatusCodeSame(200);
-
-        $client->request(
-            'GET',
-            '/api/rates/CAD_CHF',
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => self::APIKEY
-                ],
-                'query' => [
-                    '_provider' => self::PROVIDER
-                ]
-            ]
-        );
+        $client->request('GET', '/api/rates/CAD_CHF');
 
         $this->assertResponseStatusCodeSame(200);
     }
@@ -103,21 +68,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
     public function testGetRateMalformedRequest()
     {
         $client = static::createClient();
-
-        $client->request(
-            'GET',
-            '/api/rates/CA_CHF',
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => self::APIKEY
-                ],
-                'query' => [
-                    '_provider' => self::PROVIDER
-                ]
-            ]
-        );
+        $client->request('GET', '/api/rates/CA_CHF');
 
         $this->assertResponseStatusCodeSame(500);
     }
@@ -125,21 +76,7 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
     public function testRateNotFound()
     {
         $client = static::createClient();
-
-        $client->request(
-            'GET',
-            '/api/rates/ASD_CHF',
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => self::APIKEY
-                ],
-                'query' => [
-                    '_provider' => self::PROVIDER
-                ]
-            ]
-        );
+        $client->request('GET', '/api/rates/ASD_CHF');
 
         $this->assertResponseStatusCodeSame(500);
     }
