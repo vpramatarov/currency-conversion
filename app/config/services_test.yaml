@@ -1,6 +1,11 @@
+parameters:
+    apilayerApiKey: '%env(APILAYER_KEY)%'
+
 services:
     _defaults:
         public: true
+        bind:
+            $apiKey: '%apilayerApiKey%'
 
     test.api_platform.client:
         class: ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase
