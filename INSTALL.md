@@ -12,3 +12,4 @@
 5. Execute in php container (`docker exec -it container-hash-here /bin/sh`)
 6. Run `composer install` in root directory
 7. Run tests: `php bin/phpunit` in root directory
+8. Navigate to `http://localhost/api` for UI
