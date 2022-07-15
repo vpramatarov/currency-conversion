@@ -38,7 +38,7 @@ class Rate
     /**
      * 2 currency codes separated by underscore. Ex: 'CAD_CHF'.
      *
-     * @ApiProperty(identifier=true, openapiContext={"description"="test"})
+     * @ApiProperty(identifier=true)
      */
     public string $pair;
 
