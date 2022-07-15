@@ -29,9 +29,9 @@ class HelperService
 
         $trendSign = '-';
 
-        if ($avg > $todayExchangeRate) {
+        if ($avg < $todayExchangeRate) {
             $trendSign = '↑';
-        } else if ($avg < $todayExchangeRate) {
+        } else if ($avg > $todayExchangeRate) {
             $trendSign = '↓';
         }
 

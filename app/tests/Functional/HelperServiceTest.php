@@ -19,7 +19,7 @@ class HelperServiceTest extends CustomApiTestCase
             ]
         );
 
-        $this->assertEquals(0.749, $average);
+        $this->assertEquals(0.751, $average);
     }
 
     public function testCalculateTrend()
@@ -31,7 +31,7 @@ class HelperServiceTest extends CustomApiTestCase
             'calculateTrend',
             [
                 $data,
-                0.749
+                0.751
             ]
         );
 
@@ -42,7 +42,7 @@ class HelperServiceTest extends CustomApiTestCase
             'calculateTrend',
             [
                 $data,
-                0.750
+                0.748
             ]
         );
 
@@ -53,7 +53,7 @@ class HelperServiceTest extends CustomApiTestCase
             'calculateTrend',
             [
                 $data,
-                0.748
+                0.753
             ]
         );
 
@@ -68,8 +68,8 @@ class HelperServiceTest extends CustomApiTestCase
     private function getData(): array
     {
         $ratesData = json_decode(file_get_contents(__DIR__.'/timeframe.json'), true);
-        $pairKey = 'CADCHF';
-        $data = $ratesData['quotes'] ?? [];
+        $pairKey = 'CHF';
+        $data = $ratesData['rates'] ?? [];
         return array_filter(array_column($data, $pairKey));
     }
 }
