@@ -11,7 +11,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class ApiLayerCurrencyService implements FetchInterface
 {
-    private const API_URL = 'https://api.apilayer.com/currency_data/list';
+    private const API_URL = 'https://api.apilayer.com/exchangerates_data/symbols';
 
     private const PROVIDER = 'CURRENCY.APILAYER';
 
@@ -48,6 +48,7 @@ class ApiLayerCurrencyService implements FetchInterface
     public function fetchOne($id): ?Currency
     {
         $data = $this->fetchData();
+
         $currency = $data[$id] ?? null;
 
         if ($currency) {
@@ -121,7 +122,7 @@ class ApiLayerCurrencyService implements FetchInterface
 
         $data = json_decode($value, true);
 
-        return $data['currencies'] ?? [];
+        return $data['symbols'] ?? [];
     }
 
     /**

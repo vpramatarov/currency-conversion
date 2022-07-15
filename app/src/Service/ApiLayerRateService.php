@@ -13,7 +13,8 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class ApiLayerRateService implements FetchItemInterface
 {
-    private const API_URL = 'https://api.apilayer.com/currency_data/timeframe';
+
+    private const API_URL = 'https://api.apilayer.com/exchangerates_data/timeseries';
 
     private const PROVIDER = 'RATE.APILAYER';
 
@@ -65,8 +66,9 @@ class ApiLayerRateService implements FetchItemInterface
     public function fetchOne($id): ?Rate
     {
         $currencies = explode('_', $id);
-        $pairKey = implode('', $currencies);
+
         $ratesData = $this->validateData($id);
+        $pairKey = $currencies[1];
         $endDate = (new \DateTime('now'))->format('Y-m-d');
         $todayRate = $ratesData[$endDate] ?? [];
         $todayExchangeRate = $todayRate[$pairKey];
@@ -114,8 +116,8 @@ class ApiLayerRateService implements FetchItemInterface
                     'query' => [
                         'start_date' => $startDate,
                         'end_date' => $endDate,
-                        'currencies' => implode(',', $currencies),
-                        'source' => $currencies[0]
+                        'symbols' => $currencies[1],
+                        'base' => $currencies[0]
                     ]
                 ]
             );
@@ -132,7 +134,7 @@ class ApiLayerRateService implements FetchItemInterface
 
         $data = json_decode($value, true);
 
-        return $data['quotes'] ?? [];
+        return $data['rates'] ?? [];
     }
 
     /**
@@ -144,12 +146,14 @@ class ApiLayerRateService implements FetchItemInterface
     {
         $pairKey = str_replace('_', '', $pair);
 
+        $exChangeRate = $ratesData[$pairKey] ?? $ratesData[$ratesData['currencies'][1]] ?? 0;
+
         $rate = new Rate();
         $rate->pair = $pair;
         $rate->provider = self::PROVIDER;
         $rate->base = $ratesData['currencies'][0];
         $rate->target = $ratesData['currencies'][1];
-        $rate->exchangeRate = (float) sprintf('%.3f', $ratesData[$pairKey]);
+        $rate->exchangeRate = (float) sprintf('%.3f', $exChangeRate);
         $rate->suffix = $ratesData['suffix'];
 
         return $rate;

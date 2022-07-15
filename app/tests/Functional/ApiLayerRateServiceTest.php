@@ -10,6 +10,8 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
 {
     private const PROVIDER = 'APILAYER';
 
+    private const APIKEY = '26JP7BPQbbdnNrS2wvaT1uMZ6SFx9g4C';
+
     public function testCacheIsWorking()
     {
         self::bootKernel(); // bootstrap the container
@@ -62,10 +64,33 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
     {
         $client = static::createClient();
 
+        // get currencies
+        $client->request(
+            'GET',
+            '/api/currencies',
+            [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => self::APIKEY
+                ],
+                'query' => [
+                    '_provider' => self::PROVIDER
+                ]
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
         $client->request(
             'GET',
             '/api/rates/CAD_CHF',
             [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => self::APIKEY
+                ],
                 'query' => [
                     '_provider' => self::PROVIDER
                 ]
@@ -83,6 +108,11 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
             'GET',
             '/api/rates/CA_CHF',
             [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => self::APIKEY
+                ],
                 'query' => [
                     '_provider' => self::PROVIDER
                 ]
@@ -100,13 +130,18 @@ class ApiLayerRateServiceTest extends CustomApiTestCase
             'GET',
             '/api/rates/ASD_CHF',
             [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => self::APIKEY
+                ],
                 'query' => [
                     '_provider' => self::PROVIDER
                 ]
             ]
         );
 
-        $this->assertResponseStatusCodeSame(404);
+        $this->assertResponseStatusCodeSame(500);
     }
 
 }
