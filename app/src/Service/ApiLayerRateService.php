@@ -65,24 +65,13 @@ class ApiLayerRateService implements FetchItemInterface
      */
     public function fetchOne($id): ?Rate
     {
-        $currencies = explode('_', $id);
-
         $ratesData = $this->validateData($id);
-        $pairKey = $currencies[1];
-        $endDate = (new \DateTime('now'))->format('Y-m-d');
-        $todayRate = $ratesData[$endDate] ?? [];
-        $todayExchangeRate = $todayRate[$pairKey];
 
-        if ($todayRate && $todayExchangeRate) {
-
-            $todayRate['currencies'] = $currencies;
-            $calculateTrendData = array_column($ratesData, $pairKey);
-            $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
-
-            return $this->createRateObject($id, $todayRate);
+        if (!$ratesData) {
+            return null;
         }
 
-        return null;
+        return $this->createRateObject($ratesData);
     }
 
     /**
@@ -99,8 +88,11 @@ class ApiLayerRateService implements FetchItemInterface
     {
         $key = sprintf('apilayer.rate.%s', implode('', $currencies));
 
-        $value = $this->cache->get($key, function (ItemInterface $item) use ($currencies) {
+        // callback is called on cache miss only.
+        return $this->cache->get($key, function (ItemInterface $item) use ($currencies) {
             $item->expiresAfter(self::TTL);
+
+            $id = implode('_', $currencies);
             $endDate = (new \DateTime('now'))->format('Y-m-d');
             $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
 
@@ -126,34 +118,44 @@ class ApiLayerRateService implements FetchItemInterface
             $data = $response->getContent();
 
             if ($statusCode !== 200 || !$data) {
-                return '';
+                return [];
             }
 
-            return $data;
+            $data = json_decode($data, true);
+            $ratesData = $data['rates'] ?? [];
+
+            $pairKey = $currencies[1];
+            $endDate = (new \DateTime('now'))->format('Y-m-d');
+            $todayRate = $ratesData[$endDate] ?? [];
+            $todayExchangeRate = (float) sprintf('%.3f', $todayRate[$pairKey] ?? 0);
+
+            if ($todayRate && $todayExchangeRate) {
+                $todayRate['pair'] = str_replace('_', '', $id);
+                $todayRate['base'] = $currencies[0];
+                $todayRate['target'] = $currencies[1];
+                $calculateTrendData = array_column($ratesData, $pairKey);
+                $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
+                $todayRate['exchangeRate'] = $todayExchangeRate;
+
+                return $todayRate;
+            }
+
+            return [];
         });
-
-        $data = json_decode($value, true);
-
-        return $data['rates'] ?? [];
     }
 
     /**
-     * @param string $pair
      * @param array $ratesData
      * @return Rate
      */
-    private function createRateObject(string $pair, array $ratesData): Rate
+    private function createRateObject(array $ratesData): Rate
     {
-        $pairKey = str_replace('_', '', $pair);
-
-        $exChangeRate = $ratesData[$pairKey] ?? $ratesData[$ratesData['currencies'][1]] ?? 0;
-
         $rate = new Rate();
-        $rate->pair = $pair;
+        $rate->pair = $ratesData['pair'];
         $rate->provider = self::PROVIDER;
-        $rate->base = $ratesData['currencies'][0];
-        $rate->target = $ratesData['currencies'][1];
-        $rate->exchangeRate = (float) sprintf('%.3f', $exChangeRate);
+        $rate->base = $ratesData['base'];
+        $rate->target = $ratesData['target'];
+        $rate->exchangeRate = $ratesData['exchangeRate'];
         $rate->suffix = $ratesData['suffix'];
 
         return $rate;
