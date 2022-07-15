@@ -19,7 +19,7 @@ class HelperServiceTest extends CustomApiTestCase
             ]
         );
 
-        $this->assertEquals(0.751, $average);
+        $this->assertEquals(0.752, $average);
     }
 
     public function testCalculateTrend()
@@ -31,7 +31,7 @@ class HelperServiceTest extends CustomApiTestCase
             'calculateTrend',
             [
                 $data,
-                0.751
+                0.752
             ]
         );
 
