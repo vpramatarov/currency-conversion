@@ -1,12 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 
 namespace App\Entity;
+
 
 use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+
 
 /**
  * @ApiResource(
@@ -58,11 +62,6 @@ class Currency
     public string $symbol;
 
     /**
-     * @Assert\NotBlank()
-     */
-    public string $provider;
-
-    /**
      * @Groups({"currency:read"})
      * @Assert\NotBlank()
      */
@@ -70,14 +69,11 @@ class Currency
 
     /**
      * @param string $symbol
-     * @param string $provider
      * @param string $name
      */
-    public function __construct(string $symbol, string $provider, string $name)
+    public function __construct(string $symbol, string $name)
     {
         $this->symbol = $symbol;
-        $this->provider = $provider;
         $this->name = $name;
     }
-
 }
