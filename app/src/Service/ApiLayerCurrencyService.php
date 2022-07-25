@@ -1,37 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Service;
+
 
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 
 class ApiLayerCurrencyService implements FetchInterface
 {
-    private const API_URL = 'https://api.apilayer.com/exchangerates_data/symbols';
-
-    private const PROVIDER = 'CURRENCY.APILAYER';
+    private const ENDPOINT = 'symbols';
 
     private const TTL = 86400; // seconds in day
 
     private string $apiKey;
 
+    private string $apiUrl;
+
     private HttpClientInterface $httpClient;
 
-    private CacheInterface $cache;
+    private CacheItemPoolInterface $cache;
 
     /**
      * @param HttpClientInterface $httpClient
      * @param string $apiKey
-     * @param CacheInterface $cache
+     * @param string $apiUrl
+     * @param CacheItemPoolInterface $cache
      */
-    public function __construct(HttpClientInterface $httpClient, string $apiKey, CacheInterface $cache)
+    public function __construct(HttpClientInterface $httpClient, string $apiKey, string $apiUrl, CacheItemPoolInterface $cache)
     {
         $this->httpClient = $httpClient;
         $this->apiKey = $apiKey;
+        $this->apiUrl = $apiUrl;
         $this->cache = $cache;
     }
 
@@ -88,41 +93,21 @@ class ApiLayerCurrencyService implements FetchInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function fetchData(): array
+    public function fetchCurrencies(): array
     {
-        $key = 'apilayer.currencies';
+        $value = $this->cache->getItem('apilayer.currencies');
 
-        // The callable will only be executed on a cache miss.
-        $value = $this->cache->get($key, function (ItemInterface $item) {
+        if ($value->isHit()) {
+            return $value->get();
+        }
 
-            $item->expiresAfter(self::TTL);
+        if ($data = $this->fetchData()) {
+            $value->expiresAfter(self::TTL);
+            $this->cache->save($value->set($data));
+            return $value->get();
+        }
 
-            // ... do some HTTP request or heavy computations
-            $response = $this->httpClient->request(
-                'GET',
-                self::API_URL,
-                [
-                    'headers' => [
-                        'Content-Type' => 'text/plain',
-                        'Accept' => 'application/json',
-                        'apikey' => $this->apiKey
-                    ]
-                ]
-            );
-
-            $statusCode = $response->getStatusCode();
-            $data = $response->getContent();
-
-            if ($statusCode !== 200 || !$data) {
-                return '';
-            }
-
-            return $data;
-        });
-
-        $data = json_decode($value, true);
-
-        return $data['symbols'] ?? [];
+        return [];
     }
 
     /**
@@ -132,15 +117,36 @@ class ApiLayerCurrencyService implements FetchInterface
      */
     public function createCurrencyObject(string $symbol, string $name): Currency
     {
-        return new Currency($symbol, self::PROVIDER, $name);
+        return new Currency($symbol, $name);
     }
 
     /**
-     * @param string $provider
-     * @return bool
+     * Fetch data from API
+     *
+     * @return array
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-    public function supports(string $provider): bool
+    private function fetchData(): array
     {
-        return strtoupper($provider) === self::PROVIDER;
+        $apiEndpoint = sprintf('%s%s', $this->apiUrl, self::ENDPOINT);
+
+        $response = $this->httpClient->request(
+            'GET',
+            $apiEndpoint,
+            [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => $this->apiKey
+                ]
+            ]
+        );
+
+        $data = json_decode($response->getContent(), true);
+
+        return $data['symbols'] ?? [];
     }
 }

@@ -1,23 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Service;
+
 
 class HelperService
 {
-    /**
-     * Calculate average in array
-     *
-     * @param array $data
-     * @return float
-     */
-    private function arrayAverage(array $data): float
-    {
-        $data = array_filter($data, 'is_numeric'); // filter out non-numeric values
-        $avg = array_sum($data) / count($data);
-
-        return (float) sprintf('%.3f', $avg);
-    }
-
     /**
      * @param array $data
      * @param float $todayExchangeRate
@@ -31,10 +21,24 @@ class HelperService
 
         if ($avg < $todayExchangeRate) {
             $trendSign = '↑';
-        } else if ($avg > $todayExchangeRate) {
+        } elseif ($avg > $todayExchangeRate) {
             $trendSign = '↓';
         }
 
         return $trendSign;
+    }
+
+    /**
+     * Calculate average in array
+     *
+     * @param array $data
+     * @return float
+     */
+    private function arrayAverage(array $data): float
+    {
+        $data = array_filter($data, 'is_numeric'); // filter out non-numeric values
+        $avg = array_sum($data) / count($data);
+
+        return (float) sprintf('%.3f', $avg);
     }
 }

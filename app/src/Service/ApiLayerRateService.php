@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Service;
 
 
@@ -7,24 +10,23 @@ use ApiPlatform\Core\Validator\Exception\ValidationException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Contracts\FetchItemInterface;
 use App\Entity\Rate;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 
 class ApiLayerRateService implements FetchItemInterface
 {
 
-    private const API_URL = 'https://api.apilayer.com/exchangerates_data/timeseries';
-
-    private const PROVIDER = 'RATE.APILAYER';
+    private const ENDPOINT = 'timeseries';
 
     private const TTL = 3600; // seconds in hour
 
     private string $apiKey;
 
+    private string $apiUrl;
+
     private HttpClientInterface $httpClient;
 
-    private CacheInterface $cache;
+    private CacheItemPoolInterface $cache;
 
     private ApiLayerCurrencyService $apiLayerCurrencyService;
 
@@ -33,20 +35,23 @@ class ApiLayerRateService implements FetchItemInterface
     /**
      * @param HttpClientInterface $httpClient
      * @param string $apiKey
-     * @param CacheInterface $cache
+     * @param string $apiUrl
+     * @param CacheItemPoolInterface $cache
      * @param ApiLayerCurrencyService $apiLayerCurrencyService
      * @param HelperService $helperService
      */
     public function __construct(
         HttpClientInterface $httpClient,
         string $apiKey,
-        CacheInterface $cache,
+        string $apiUrl,
+        CacheItemPoolInterface $cache,
         ApiLayerCurrencyService $apiLayerCurrencyService,
         HelperService $helperService
     )
     {
         $this->httpClient = $httpClient;
         $this->apiKey = $apiKey;
+        $this->apiUrl = $apiUrl;
         $this->cache = $cache;
         $this->apiLayerCurrencyService = $apiLayerCurrencyService;
         $this->helperService = $helperService;
@@ -65,7 +70,9 @@ class ApiLayerRateService implements FetchItemInterface
      */
     public function fetchOne($id): ?Rate
     {
-        $ratesData = $this->validateData($id);
+        $this->validateData($id);
+        $currencies = explode('_', $id);
+        $ratesData = $this->fetchData($currencies);
 
         if (!$ratesData) {
             return null;
@@ -75,6 +82,10 @@ class ApiLayerRateService implements FetchItemInterface
     }
 
     /**
+     * Get data from cache if exists.
+     * If data does not exist in cache, it's saved and returned.
+     * Empty array is returned if data could not be retrieved.
+     *
      * @param array $currencies
      * @return array
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
@@ -88,60 +99,73 @@ class ApiLayerRateService implements FetchItemInterface
     {
         $key = sprintf('apilayer.rate.%s', implode('', $currencies));
 
-        // callback is called on cache miss only.
-        return $this->cache->get($key, function (ItemInterface $item) use ($currencies) {
-            $item->expiresAfter(self::TTL);
+        $value = $this->cache->getItem($key);
 
-            $id = implode('_', $currencies);
-            $endDate = (new \DateTime('now'))->format('Y-m-d');
-            $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
+        if ($value->isHit()) {
+            return $value->get();
+        }
 
-            $response = $this->httpClient->request(
-                'GET',
-                self::API_URL,
-                [
-                    'headers' => [
-                        'Content-Type' => 'text/plain',
-                        'Accept' => 'application/json',
-                        'apikey' => $this->apiKey
-                    ],
-                    'query' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'symbols' => $currencies[1],
-                        'base' => $currencies[0]
-                    ]
+        if ($data = $this->fetchCurrencyPair($currencies)) {
+            $value->expiresAfter(self::TTL);
+            $this->cache->save($value->set($data));
+            return $value->get();
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array $currencies
+     * @return array
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     */
+    private function fetchCurrencyPair(array $currencies): array
+    {
+        $apiEndpoint = sprintf('%s%s', $this->apiUrl, self::ENDPOINT);
+        $endDate = (new \DateTime('now'))->format('Y-m-d');
+        $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
+
+        $response = $this->httpClient->request(
+            'GET',
+            $apiEndpoint,
+            [
+                'headers' => [
+                    'Content-Type' => 'text/plain',
+                    'Accept' => 'application/json',
+                    'apikey' => $this->apiKey
+                ],
+                'query' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'symbols' => $currencies[1],
+                    'base' => $currencies[0]
                 ]
-            );
+            ]
+        );
 
-            $statusCode = $response->getStatusCode();
-            $data = $response->getContent();
+        $data = json_decode($response->getContent(), true);
+        $ratesData = $data['rates'] ?? [];
 
-            if ($statusCode !== 200 || !$data) {
-                return [];
-            }
+        $pairKey = $currencies[1];
+        $endDate = (new \DateTime('now'))->format('Y-m-d');
+        $todayRate = $ratesData[$endDate] ?? [];
+        $todayExchangeRate = (float) sprintf('%.3f', $todayRate[$pairKey] ?? 0);
 
-            $data = json_decode($data, true);
-            $ratesData = $data['rates'] ?? [];
+        if ($todayRate && ($todayExchangeRate > 0)) {
+            $todayRate['pair'] = implode('', $currencies);
+            $todayRate['base'] = $currencies[0];
+            $todayRate['target'] = $currencies[1];
+            $calculateTrendData = array_column($ratesData, $pairKey);
+            $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
+            $todayRate['exchangeRate'] = $todayExchangeRate;
 
-            $pairKey = $currencies[1];
-            $endDate = (new \DateTime('now'))->format('Y-m-d');
-            $todayRate = $ratesData[$endDate] ?? [];
-            $todayExchangeRate = (float) sprintf('%.3f', $todayRate[$pairKey] ?? 0);
+            return $todayRate;
+        }
 
-            if ($todayRate && $todayExchangeRate) {
-                $todayRate['pair'] = str_replace('_', '', $id);
-                $todayRate['base'] = $currencies[0];
-                $todayRate['target'] = $currencies[1];
-                $calculateTrendData = array_column($ratesData, $pairKey);
-                $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
-                $todayRate['exchangeRate'] = $todayExchangeRate;
-
-                return $todayRate;
-            }
-
-            return [];
-        });
+        return [];
     }
 
     /**
@@ -152,7 +176,6 @@ class ApiLayerRateService implements FetchItemInterface
     {
         $rate = new Rate();
         $rate->pair = $ratesData['pair'];
-        $rate->provider = self::PROVIDER;
         $rate->base = $ratesData['base'];
         $rate->target = $ratesData['target'];
         $rate->exchangeRate = $ratesData['exchangeRate'];
@@ -163,7 +186,7 @@ class ApiLayerRateService implements FetchItemInterface
 
     /**
      * @param string $id
-     * @return array
+     * @return void
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -172,7 +195,7 @@ class ApiLayerRateService implements FetchItemInterface
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws ValidationException
      */
-    private function validateData(string $id): array
+    private function validateData(string $id): void
     {
         $currencies = explode('_', $id);
 
@@ -180,7 +203,7 @@ class ApiLayerRateService implements FetchItemInterface
             throw new ValidationException('Please provide 2 Currency codes separated by underscore. Ex.: CAD_CHF');
         }
 
-        $availableCurrencies = $this->apiLayerCurrencyService->fetchData();
+        $availableCurrencies = $this->apiLayerCurrencyService->fetchCurrencies();
 
         $diff = array_diff_key(array_flip($currencies), $availableCurrencies);
         $validateCurrencies = count($diff) === 0;
@@ -195,16 +218,5 @@ class ApiLayerRateService implements FetchItemInterface
 
             throw new ValidationException($msg);
         }
-
-        return $this->fetchData($currencies);
-    }
-
-    /**
-     * @param string $provider
-     * @return bool
-     */
-    public function supports(string $provider): bool
-    {
-        return strtoupper($provider) === self::PROVIDER;
     }
 }
