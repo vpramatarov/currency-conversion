@@ -1,11 +1,13 @@
 parameters:
     apilayerApiKey: '%env(APILAYER_KEY)%'
+    apiUrl: '%env(API_URL)%'
 
 services:
     _defaults:
         public: true
         bind:
             $apiKey: '%apilayerApiKey%'
+            $apiUrl: '%apiUrl%'
 
     test.api_platform.client:
         class: ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase
