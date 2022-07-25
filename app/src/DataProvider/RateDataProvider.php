@@ -1,28 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\DataProvider;
+
 
 use ApiPlatform\Core\DataProvider\ItemDataProviderInterface;
 use ApiPlatform\Core\DataProvider\RestrictedDataProviderInterface;
 use App\Contracts\FetchItemInterface;
 use App\Entity\Rate;
 
+
 class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProviderInterface
 {
 
-    /**
-     * @var FetchItemInterface[]
-     */
-    private iterable $fetchServices;
+    private FetchItemInterface $fetchService;
 
 
-    public function __construct(iterable $fetchServices)
+    public function __construct(FetchItemInterface $fetchService)
     {
-        foreach ($fetchServices as $services) {
-            foreach ($services as $service) {
-                $this->fetchServices[] = $service;
-            }
-        }
+        $this->fetchService = $fetchService;
     }
 
     /**
@@ -34,17 +32,7 @@ class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProvi
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Rate
     {
-        $provider = $context['_provider'] ?? '';
-
-        if (!empty($provider)) {
-            foreach($this->fetchServices as $fetchService) {
-                if ($fetchService->supports($provider)) {
-                    return $fetchService->fetchOne($id);
-                }
-            }
-        }
-
-        return null;
+        return $this->fetchService->fetchOne($id);
     }
 
     /**
@@ -57,5 +45,4 @@ class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProvi
     {
         return $resourceClass === Rate::class;
     }
-
 }

@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\DataProvider;
+
 
 use ApiPlatform\Core\DataProvider\ContextAwareCollectionDataProviderInterface;
 use ApiPlatform\Core\DataProvider\ItemDataProviderInterface;
@@ -8,23 +12,17 @@ use ApiPlatform\Core\DataProvider\RestrictedDataProviderInterface;
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 
+
 class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCollectionDataProviderInterface, RestrictedDataProviderInterface
 {
-    /**
-     * @var FetchInterface[]
-     */
-    private iterable $fetchServices;
+
+    private FetchInterface $fetchService;
 
 
-    public function __construct(iterable $fetchServices)
+    public function __construct(FetchInterface $fetchService)
     {
-        foreach ($fetchServices as $services) {
-            foreach ($services as $service) {
-                $this->fetchServices[] = $service;
-            }
-        }
+        $this->fetchService = $fetchService;
     }
-
 
     /**
      * @param string $resourceClass
@@ -35,17 +33,7 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Currency
     {
-        $provider = $context['_provider'] ?? '';
-
-        if (!empty($provider)) {
-            foreach($this->fetchServices as $fetchService) {
-                if ($fetchService->supports($provider)) {
-                    return $fetchService->fetchOne($id);
-                }
-            }
-        }
-
-        return null;
+        return $this->fetchService->fetchOne($id);
     }
 
     /**
@@ -56,17 +44,7 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
      */
     public function getCollection(string $resourceClass, string $operationName = null, array $context = []): iterable
     {
-        $provider = $context['_provider'] ?? '';
-
-        if (!empty($provider)) {
-            foreach($this->fetchServices as $fetchService) {
-                if ($fetchService->supports($provider)) {
-                    return $fetchService->fetchMany();
-                }
-            }
-        }
-
-        return [];
+        return $this->fetchService->fetchMany();
     }
 
     /**
@@ -79,5 +57,4 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     {
         return $resourceClass === Currency::class;
     }
-
 }
