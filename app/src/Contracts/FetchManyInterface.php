@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Contracts;
 
-interface FetchManyInterface extends ProviderInterface
+
+interface FetchManyInterface
 {
     public function fetchMany(): array;
 }

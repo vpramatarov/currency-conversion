@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Contracts;
 
-interface FetchItemInterface extends ProviderInterface
+
+interface FetchItemInterface
 {
     public function fetchOne($id);
 }
