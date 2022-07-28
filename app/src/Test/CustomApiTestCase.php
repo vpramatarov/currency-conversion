@@ -1,50 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Test;
 
+
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
-use Symfony\Contracts\Cache\CacheInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Cache\CacheItemPoolInterface;
+
 
 class CustomApiTestCase extends ApiTestCase
 {
 
-    protected function getCacheService()
+    protected function getCacheService(): CacheItemPoolInterface
     {
-        return self::getContainer()->get(CacheInterface::class);
+        return self::getContainer()->get('cache.app');
     }
 
-    /**
-     * @param string $className
-     * @param string $methodName
-     * @param array $args
-     * @return mixed
-     * @throws \ReflectionException
-     */
-    protected function invoke(string $className, string $methodName, array $args = [])
+    protected function getMock(string $className): MockObject
     {
-        $mockedInstance = $this->getMockBuilder($className)
-                               ->disableOriginalConstructor()    // you may need the constructor on integration tests only
-                               ->getMock();
-
-        $privateMethod = $this->getMethod($className, $methodName);
-
-        return $privateMethod->invokeArgs($mockedInstance, $args);
+        return $this->getMockBuilder($className)
+             ->disableOriginalConstructor()    // you may need the constructor on integration tests only
+             ->getMock();
     }
-
-    /**
-     * @param string $className
-     * @param string $methodName
-     * @return \ReflectionMethod
-     * @throws \ReflectionException
-     */
-    private function getMethod(string $className, string $methodName): \ReflectionMethod
-    {
-        $class = new \ReflectionClass($className);
-
-        $method = $class->getMethod($methodName);
-        $method->setAccessible(true);
-
-        return $method;
-    }
-
 }
