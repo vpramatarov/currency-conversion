@@ -1,63 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
+
 namespace App\Tests\Functional;
+
 
 use App\Service\HelperService;
 use App\Test\CustomApiTestCase;
 
+
 class HelperServiceTest extends CustomApiTestCase
 {
-    public function testArrayAverage()
+
+    /**
+     * @dataProvider getTrendTests
+     */
+    public function testCalculateTrend(array $data, float $todayExchangeRate, string $expectedValue)
     {
-        $data = $this->getData();
+        $helperService = new HelperService();
+        $trend = $helperService->calculateTrend($data, $todayExchangeRate);
 
-        $average = $this->invoke(
-            HelperService::class,
-            'arrayAverage',
-            [
-                $data
-            ]
-        );
-
-        $this->assertEquals(0.752, $average);
+        $this->assertEquals($expectedValue, $trend);
     }
 
-    public function testCalculateTrend()
+    public function getTrendTests(): array
     {
-        $data = $this->getData();
+        $data = $this->getRatesTestData();
 
-        $trendEqual = $this->invoke(
-            HelperService::class,
-            'calculateTrend',
-            [
-                $data,
-                0.752
-            ]
-        );
-
-        $this->assertEquals('-', $trendEqual);
-
-        $trendDown = $this->invoke(
-            HelperService::class,
-            'calculateTrend',
-            [
-                $data,
-                0.748
-            ]
-        );
-
-        $this->assertEquals('↓', $trendDown);
-
-        $trendUp = $this->invoke(
-            HelperService::class,
-            'calculateTrend',
-            [
-                $data,
-                0.753
-            ]
-        );
-
-        $this->assertEquals('↑', $trendUp);
+        return [
+            [$data, 0.752, '-'],
+            [$data, 0.748, '↓'],
+            [$data, 0.753, '↑']
+        ];
     }
 
     /**
@@ -65,11 +40,11 @@ class HelperServiceTest extends CustomApiTestCase
      *
      * @return array
      */
-    private function getData(): array
+    private function getRatesTestData(): array
     {
         $ratesData = json_decode(file_get_contents(__DIR__.'/timeframe.json'), true);
-        $pairKey = 'CHF';
+        $currency = 'CHF';
         $data = $ratesData['rates'] ?? [];
-        return array_filter(array_column($data, $pairKey));
+        return array_filter(array_column($data, $currency));
     }
 }
