@@ -60,3 +60,7 @@
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
+
+###> misc ###
+tests/Service/timeframe.json
+###> misc ###
