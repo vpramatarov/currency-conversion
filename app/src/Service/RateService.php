@@ -7,54 +7,37 @@ namespace App\Service;
 
 
 use ApiPlatform\Core\Validator\Exception\ValidationException;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Contracts\FetchItemInterface;
 use App\Entity\Rate;
 use Psr\Cache\CacheItemPoolInterface;
 
 
-class ApiLayerRateService implements FetchItemInterface
+class RateService implements FetchItemInterface
 {
 
     private const ENDPOINT = 'timeseries';
     /** @todo: return old value (3600) */
     private const TTL = 86400; //3600; // seconds in hour
 
-    private string $apiKey;
-
-    private string $apiUrl;
-
-    private HttpClientInterface $httpClient;
-
     private CacheItemPoolInterface $cache;
 
-    private ApiLayerCurrencyService $apiLayerCurrencyService;
+    private CurrencyService $currencyService;
 
-    private HelperService $helperService;
+    private ApiService $apiService;
 
     /**
-     * @param HttpClientInterface $httpClient
-     * @param string $apiKey
-     * @param string $apiUrl
      * @param CacheItemPoolInterface $cache
-     * @param ApiLayerCurrencyService $apiLayerCurrencyService
-     * @param HelperService $helperService
+     * @param ApiService $apiService
+     * @param CurrencyService $apiLayerCurrencyService
      */
     public function __construct(
-        HttpClientInterface $httpClient,
-        string $apiKey,
-        string $apiUrl,
         CacheItemPoolInterface $cache,
-        ApiLayerCurrencyService $apiLayerCurrencyService,
-        HelperService $helperService
-    )
-    {
-        $this->httpClient = $httpClient;
-        $this->apiKey = $apiKey;
-        $this->apiUrl = $apiUrl;
+        ApiService $apiService,
+        CurrencyService $apiLayerCurrencyService
+    ) {
         $this->cache = $cache;
-        $this->apiLayerCurrencyService = $apiLayerCurrencyService;
-        $this->helperService = $helperService;
+        $this->apiService = $apiService;
+        $this->currencyService = $apiLayerCurrencyService;
     }
 
     /**
@@ -105,64 +88,10 @@ class ApiLayerRateService implements FetchItemInterface
             return $value->get();
         }
 
-        if ($data = $this->fetchCurrencyPair($currencies)) {
+        if ($data = $this->apiService->fetchCurrencyPair($currencies, self::ENDPOINT)) {
             $value->expiresAfter(self::TTL);
             $this->cache->save($value->set($data));
             return $value->get();
-        }
-
-        return [];
-    }
-
-    /**
-     * @param array $currencies
-     * @return array
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     */
-    private function fetchCurrencyPair(array $currencies): array
-    {
-        $apiEndpoint = sprintf('%s%s', $this->apiUrl, self::ENDPOINT);
-        $endDate = (new \DateTime('now'))->format('Y-m-d');
-        $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
-
-        $response = $this->httpClient->request(
-            'GET',
-            $apiEndpoint,
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => $this->apiKey
-                ],
-                'query' => [
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'symbols' => $currencies[1],
-                    'base' => $currencies[0]
-                ]
-            ]
-        );
-
-        $data = json_decode($response->getContent(), true);
-        $ratesData = $data['rates'] ?? [];
-
-        $pairKey = $currencies[1];
-        $endDate = (new \DateTime('now'))->format('Y-m-d');
-        $todayRate = $ratesData[$endDate] ?? [];
-        $todayExchangeRate = (float) sprintf('%.3f', $todayRate[$pairKey] ?? 0);
-
-        if ($todayRate && ($todayExchangeRate > 0)) {
-            $todayRate['pair'] = implode('', $currencies);
-            $todayRate['base'] = $currencies[0];
-            $todayRate['target'] = $currencies[1];
-            $calculateTrendData = array_column($ratesData, $pairKey);
-            $todayRate['suffix'] = $this->helperService->calculateTrend($calculateTrendData, $todayExchangeRate);
-            $todayRate['exchangeRate'] = $todayExchangeRate;
-
-            return $todayRate;
         }
 
         return [];
@@ -203,7 +132,7 @@ class ApiLayerRateService implements FetchItemInterface
             throw new ValidationException('Please provide 2 Currency codes separated by underscore. Ex.: CAD_CHF');
         }
 
-        $availableCurrencies = $this->apiLayerCurrencyService->fetchCurrencies();
+        $availableCurrencies = $this->currencyService->fetchCurrencies();
 
         $diff = array_diff_key(array_flip($currencies), $availableCurrencies);
         $validateCurrencies = count($diff) === 0;

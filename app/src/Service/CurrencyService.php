@@ -8,36 +8,27 @@ namespace App\Service;
 
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 
-class ApiLayerCurrencyService implements FetchInterface
+class CurrencyService implements FetchInterface
 {
     private const ENDPOINT = 'symbols';
 
     private const TTL = 86400; // seconds in day
 
-    private string $apiKey;
-
-    private string $apiUrl;
-
-    private HttpClientInterface $httpClient;
-
     private CacheItemPoolInterface $cache;
 
+    private ApiService $apiService;
+
     /**
-     * @param HttpClientInterface $httpClient
-     * @param string $apiKey
-     * @param string $apiUrl
      * @param CacheItemPoolInterface $cache
+     * @param ApiService $apiService
      */
-    public function __construct(HttpClientInterface $httpClient, string $apiKey, string $apiUrl, CacheItemPoolInterface $cache)
+    public function __construct(CacheItemPoolInterface $cache, ApiService $apiService)
     {
-        $this->httpClient = $httpClient;
-        $this->apiKey = $apiKey;
-        $this->apiUrl = $apiUrl;
         $this->cache = $cache;
+        $this->apiService = $apiService;
     }
 
     /**
@@ -52,7 +43,7 @@ class ApiLayerCurrencyService implements FetchInterface
      */
     public function fetchOne($id): ?Currency
     {
-        $data = $this->fetchData();
+        $data = $this->fetchCurrencies();
 
         $currency = $data[$id] ?? null;
 
@@ -75,7 +66,7 @@ class ApiLayerCurrencyService implements FetchInterface
     public function fetchMany(): array
     {
         $currencies = [];
-        $data = $this->fetchData();
+        $data = $this->fetchCurrencies();
 
         foreach ($data as $symbol => $name) {
             $currencies[] = $this->createCurrencyObject($symbol, $name);
@@ -101,7 +92,7 @@ class ApiLayerCurrencyService implements FetchInterface
             return $value->get();
         }
 
-        if ($data = $this->fetchData()) {
+        if ($data = $this->apiService->fetchCurrencies(self::ENDPOINT)) {
             $value->expiresAfter(self::TTL);
             $this->cache->save($value->set($data));
             return $value->get();
@@ -118,35 +109,5 @@ class ApiLayerCurrencyService implements FetchInterface
     public function createCurrencyObject(string $symbol, string $name): Currency
     {
         return new Currency($symbol, $name);
-    }
-
-    /**
-     * Fetch data from API
-     *
-     * @return array
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     */
-    private function fetchData(): array
-    {
-        $apiEndpoint = sprintf('%s%s', $this->apiUrl, self::ENDPOINT);
-
-        $response = $this->httpClient->request(
-            'GET',
-            $apiEndpoint,
-            [
-                'headers' => [
-                    'Content-Type' => 'text/plain',
-                    'Accept' => 'application/json',
-                    'apikey' => $this->apiKey
-                ]
-            ]
-        );
-
-        $data = json_decode($response->getContent(), true);
-
-        return $data['symbols'] ?? [];
     }
 }
