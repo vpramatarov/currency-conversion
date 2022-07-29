@@ -3,76 +3,49 @@
 declare(strict_types=1);
 
 
-namespace App\Tests\Functional;
+namespace App\Tests\Service;
 
 
-use App\Entity\Rate;
-use App\Service\CurrencyService;
-use App\Service\RateService;
-use App\Service\HelperService;
+use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client;
 use App\Test\CustomApiTestCase;
-use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 
 class RateServiceTest extends CustomApiTestCase
 {
 
-    private \ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client $client;
+    private Client $client;
 
     public function setUp(): void
     {
         $this->client = static::createClient();
+        $this->regenerateTimeframeFile();
     }
-
-    /**
-     * @group time-sensitive
-     */
-    public function testCacheIsWorking()
-    {
-        $keys = [
-            'test.apilayer.currencies' => [
-                'json' => file_get_contents(__DIR__ . '/symbols.json'),
-                'ttl' => 3600 // seconds in hour
-            ],
-            'test.apilayer.rate.CADCHF' => [
-                'json' => file_get_contents(__DIR__ . '/timeframe.json'),
-                'ttl' => 86400 // seconds in day
-            ]
-        ];
-
-        $cache = $this->getCacheService();
-
-        foreach ($keys as $key => $data)
-        {
-            // delete cache data if exist
-            $cache->deleteItem($key);
-
-            $json = $data['json'] ?? '';
-            $ttl = $data['ttl'] ?? 3600;
-
-            $cacheItem = $cache->getItem($key);
-
-            if (!$cacheItem->isHit()) {
-                $cacheItem->expiresAfter($ttl);
-                $cache->save($cacheItem->set($json));
-            }
-
-            $cacheItem2 = $cache->getItem($key);
-
-            $this->assertNotEquals($cacheItem->isHit(), $cacheItem2->isHit());
-        }
-    }
-
 
     public function testGetRateRequest()
     {
         $this->client->request('GET', '/api/rates/CAD_CHF');
         $this->assertResponseStatusCodeSame(200);
-        $this->assertJsonContains(['base' => 'CAD', 'target' => 'CHF']);
+        $this->assertJsonContains(['@context' => '/api/contexts/Rate', 'base' => 'CAD', 'target' => 'CHF']);
     }
 
+    public function testGetRateRequestCache()
+    {
+        $cache = $this->getCacheService();
+        $key = 'apilayer.rate.CADCHF';
+        $cache->deleteItem($key);
+
+        $cacheItem = $cache->getItem($key);
+        $this->assertFalse($cacheItem->isHit());
+
+        $this->client->request('GET', '/api/rates/CAD_CHF');
+        $this->assertResponseStatusCodeSame(200);
+        $cacheItem2 = $cache->getItem($key);
+        $this->assertTrue($cacheItem2->isHit());
+
+        $cacheItem3 = $cache->getItem($key);
+        $this->assertTrue($cacheItem3->isHit());
+        $cache->deleteItem($key);
+    }
 
     public function testGetRateMalformedRequest()
     {
@@ -80,7 +53,6 @@ class RateServiceTest extends CustomApiTestCase
         $this->assertResponseStatusCodeSame(500);
         $this->assertJsonContains(['hydra:description' => 'Please provide valid Currencies. CA is not a valid Currency.']);
     }
-
 
     public function testRateNotFound()
     {
@@ -90,13 +62,62 @@ class RateServiceTest extends CustomApiTestCase
     }
 
     /**
-     * Get fake rates data
+     * Generate an array of string dates between 2 dates
      *
+     * @param string $start Start date
+     * @param string $end End date
+     * @param string $format Output format (Default: Y-m-d)
      * @return array
+     * @throws \Exception
      */
-    private function getCurrencyData(): array
+    private function generateDatesFromRange(string $start, string $end, string $format = 'Y-m-d'): array
     {
-        $currencyData = json_decode(file_get_contents(__DIR__.'/symbols.json'), true);
-        return $currencyData['symbols'] ?? [];
+        $array = [];
+        $interval = new \DateInterval('P1D');
+
+        $realEnd = new \DateTime($end);
+        $realEnd->add($interval);
+
+        $period = new \DatePeriod(new \DateTime($start), $interval, $realEnd);
+
+        foreach($period as $date) {
+            $array[] = $date->format($format);
+        }
+
+        return $array;
+    }
+
+    /**
+     * Need to regenerate file with test data, because the dates do not match.
+     *
+     * @return void
+     * @throws \Exception
+     */
+    private function regenerateTimeframeFile()
+    {
+        $file = file_get_contents(__DIR__ . '/timeframe.json');
+        $data = json_decode($file, true);
+        $oldDates = array_keys($data['rates']);
+        $endDate = (new \DateTime('now'))->format('Y-m-d');
+        $startDate = (new \DateTime('now'))->modify('-9 days')->format('Y-m-d');
+        $rangeDates = $this->generateDatesFromRange($startDate, $endDate);
+        $dates = array_combine($oldDates, $rangeDates);
+        $lastDate = $rangeDates[array_key_last($rangeDates)];
+        $firstDate = $rangeDates[array_key_first($rangeDates)];
+
+        $newData = [];
+        $newData['base'] = $data['base'];
+        $newData['success'] = $data['success'];
+        $newData['timeseries'] = $data['timeseries'];
+        $newData['end_date'] = $lastDate;
+        $newData['start_date'] = $firstDate;
+        $newData['rates'] = [];
+
+        foreach ($data['rates'] as $key => $rate) {
+            $newData['rates'][$dates[$key]] = $rate;
+        }
+
+        // override data
+        file_put_contents(__DIR__ . '/timeframe.json', json_encode($newData));
     }
 }
