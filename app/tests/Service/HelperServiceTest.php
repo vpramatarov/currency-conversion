@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 
-namespace App\Tests\Functional;
+namespace App\Tests\Service;
 
 
 use App\Service\HelperService;

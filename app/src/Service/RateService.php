@@ -17,8 +17,8 @@ class ApiLayerRateService implements FetchItemInterface
 {
 
     private const ENDPOINT = 'timeseries';
-
-    private const TTL = 3600; // seconds in hour
+    /** @todo: return old value (3600) */
+    private const TTL = 86400; //3600; // seconds in hour
 
     private string $apiKey;
 
