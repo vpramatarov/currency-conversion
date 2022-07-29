@@ -17,6 +17,22 @@ framework:
     php_errors:
         log: true
 
+    # https://symfony.com/doc/current/components/http_client.html#symfony-framework-integration
+    http_client:
+        default_options:
+            max_redirects: 5
+        scoped_clients:
+            # Specialized client to consume the APILAYER
+            # Each scoped client also defines a corresponding named autowiring alias. If you use for example Symfony\Contracts\HttpClient\HttpClientInterface $githubClient
+            # as the type and name of an argument, autowiring will inject the github.client service into your autowired classes. (https://symfony.com/doc/5.4/http_client.html)
+            http.client:
+                timeout: 10
+                base_uri: '%env(API_URL)%'
+                headers:
+                    'Accept': 'application/json'
+                    'Content-Type': 'application/plain'
+                    'apikey': '%env(APILAYER_KEY)%'
+
 when@test:
     framework:
         test: true

@@ -3,10 +3,6 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-parameters:
-    apilayerApiKey: '%env(APILAYER_KEY)%'
-    apiUrl: '%env(API_URL)%'
-
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -31,19 +27,8 @@ services:
 
     App\DataProvider\RateDataProvider:
         bind:
-            $fetchService: '@App\Service\ApiLayerRateService'
+            $fetchService: '@App\Service\RateService'
 
     App\DataProvider\CurrencyDataProvider:
         bind:
-            $fetchService: '@App\Service\ApiLayerCurrencyService'
-
-    App\Service\ApiLayerCurrencyService:
-        bind:
-            $apiKey: '%apilayerApiKey%'
-            $apiUrl: '%apiUrl%'
-
-    App\Service\ApiLayerRateService:
-        bind:
-            $apiKey: '%apilayerApiKey%'
-            $apiUrl: '%apiUrl%'
-
+            $fetchService: '@App\Service\CurrencyService'

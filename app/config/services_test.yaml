@@ -1,14 +1,10 @@
-parameters:
-    apilayerApiKey: '%env(APILAYER_KEY)%'
-    apiUrl: '%env(API_URL)%'
-
 services:
     _defaults:
+        autowire: true
+        autoconfigure: true
         public: true
-        bind:
-            $apiKey: '%apilayerApiKey%'
-            $apiUrl: '%apiUrl%'
 
-    test.api_platform.client:
-        class: ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase
-        arguments: ['@test.client']
+    App\Tests\Service\ApiServiceMock:
+        decorates: 'http.client'
+        decoration_inner_name: 'App\Tests\Service\ApiServiceMock.http.client'
+        arguments: [ '@.inner' ]
