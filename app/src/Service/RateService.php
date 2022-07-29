@@ -16,8 +16,8 @@ class RateService implements FetchItemInterface
 {
 
     private const ENDPOINT = 'timeseries';
-    /** @todo: return old value (3600) */
-    private const TTL = 86400; //3600; // seconds in hour
+
+    private const TTL = 3600; // seconds in hour
 
     private CacheItemPoolInterface $cache;
 
