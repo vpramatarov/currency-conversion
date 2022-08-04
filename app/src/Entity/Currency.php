@@ -19,36 +19,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "groups"={"currency:read"}
  *     },
  *     itemOperations={
- *          "get"={
- *              "openapi_context"={
- *                  "parameters"={
- *                      {
- *                          "name"="_provider",
- *                          "in"="query",
- *                          "description"="Set Provider. Currently supports APILAYER. Default: 'APILAYER'",
- *                          "schema"={
- *                              "type"="string"
- *                          }
- *                      }
- *                  }
- *               }
- *          }
+ *          "get"
  *     },
  *     collectionOperations={
- *          "get"={
- *              "openapi_context"={
- *                  "parameters"={
- *                      {
- *                          "name"="_provider",
- *                          "in"="query",
- *                          "description"="Set Provider. Currently supports APILAYER. Default: 'APILAYER'",
- *                          "schema"={
- *                              "type"="string"
- *                          }
- *                      }
- *                  }
- *               }
- *          }
+ *          "get"
  *     }
  * )
  */
