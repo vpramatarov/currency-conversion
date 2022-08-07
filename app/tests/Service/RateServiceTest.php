@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-
 namespace App\Tests\Service;
-
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client;
 use App\Test\CustomApiTestCase;
 
-
 class RateServiceTest extends CustomApiTestCase
 {
-
     private Client $client;
 
     public function setUp(): void
@@ -23,6 +19,7 @@ class RateServiceTest extends CustomApiTestCase
 
     /**
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -38,6 +35,7 @@ class RateServiceTest extends CustomApiTestCase
 
     /**
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
     public function testGetRateRequestCache()
@@ -61,6 +59,7 @@ class RateServiceTest extends CustomApiTestCase
 
     /**
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -76,6 +75,7 @@ class RateServiceTest extends CustomApiTestCase
 
     /**
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -90,12 +90,14 @@ class RateServiceTest extends CustomApiTestCase
     }
 
     /**
-     * Generate an array of string dates between 2 dates
+     * Generate an array of string dates between 2 dates.
      *
-     * @param string $start Start date
-     * @param string $end End date
+     * @param string $start  Start date
+     * @param string $end    End date
      * @param string $format Output format (Default: Y-m-d)
+     *
      * @return array<int, string>
+     *
      * @throws \Exception
      */
     private function generateDatesFromRange(string $start, string $end, string $format = 'Y-m-d'): array
@@ -108,7 +110,7 @@ class RateServiceTest extends CustomApiTestCase
 
         $period = new \DatePeriod(new \DateTime($start), $interval, $realEnd);
 
-        foreach($period as $date) {
+        foreach ($period as $date) {
             $array[] = $date->format($format);
         }
 
@@ -119,11 +121,12 @@ class RateServiceTest extends CustomApiTestCase
      * Need to regenerate file with test data, because the dates do not match.
      *
      * @return void
+     *
      * @throws \Exception
      */
     private function regenerateTimeframeFile()
     {
-        $file = file_get_contents(__DIR__ . '/timeframe.json');
+        $file = file_get_contents(__DIR__.'/timeframe.json');
         $data = json_decode($file, true);
         $oldDates = array_keys($data['rates']);
         $endDate = (new \DateTime('now'))->format('Y-m-d');
@@ -146,6 +149,6 @@ class RateServiceTest extends CustomApiTestCase
         }
 
         // override data
-        file_put_contents(__DIR__ . '/timeframe.json', json_encode($newData));
+        file_put_contents(__DIR__.'/timeframe.json', json_encode($newData));
     }
 }

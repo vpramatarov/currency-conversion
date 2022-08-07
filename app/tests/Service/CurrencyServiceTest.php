@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-
 namespace App\Tests\Service;
-
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client;
 use App\Test\CustomApiTestCase;
 
-
 class CurrencyServiceTest extends CustomApiTestCase
 {
-
     private Client $client;
 
     public function setUp(): void
@@ -22,6 +18,7 @@ class CurrencyServiceTest extends CustomApiTestCase
 
     /**
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface

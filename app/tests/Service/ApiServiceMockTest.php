@@ -2,16 +2,12 @@
 
 declare(strict_types=1);
 
-
 namespace App\Tests\Service;
-
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-
 final class ApiServiceMockTest extends KernelTestCase
 {
-
     /**
      * Test that the "http.client" service is decorated by the mock.
      *

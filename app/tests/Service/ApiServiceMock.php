@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
-
 namespace App\Tests\Service;
-
 
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-
 final class ApiServiceMock extends MockHttpClient
 {
-
     private string $baseUri = 'https://api.example.com';
-
 
     public function __construct()
     {
@@ -27,7 +22,9 @@ final class ApiServiceMock extends MockHttpClient
     /**
      * @param string $method
      * @param string $url
+     *
      * @return MockResponse
+     *
      * @throws \JsonException
      */
     private function handleRequests(string $method, string $url): MockResponse
@@ -47,6 +44,7 @@ final class ApiServiceMock extends MockHttpClient
      * "/symbols" endpoint.
      *
      * @return MockResponse
+     *
      * @throws \JsonException
      */
     private function getCurrenciesMock(): MockResponse
@@ -63,6 +61,7 @@ final class ApiServiceMock extends MockHttpClient
      * "/timeseries" endpoint.
      *
      * @return MockResponse
+     *
      * @throws \JsonException
      */
     private function getRatesMock(): MockResponse

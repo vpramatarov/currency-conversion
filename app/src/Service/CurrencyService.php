@@ -2,14 +2,11 @@
 
 declare(strict_types=1);
 
-
 namespace App\Service;
-
 
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 use Psr\Cache\CacheItemPoolInterface;
-
 
 class CurrencyService implements FetchInterface
 {
@@ -23,7 +20,7 @@ class CurrencyService implements FetchInterface
 
     /**
      * @param CacheItemPoolInterface $cache
-     * @param ApiService $apiService
+     * @param ApiService             $apiService
      */
     public function __construct(CacheItemPoolInterface $cache, ApiService $apiService)
     {
@@ -33,7 +30,9 @@ class CurrencyService implements FetchInterface
 
     /**
      * @param string $id
+     *
      * @return Currency|null
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -55,6 +54,7 @@ class CurrencyService implements FetchInterface
 
     /**
      * @return array<int, Currency>
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -75,6 +75,7 @@ class CurrencyService implements FetchInterface
 
     /**
      * @return mixed[]
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -92,6 +93,7 @@ class CurrencyService implements FetchInterface
         if ($data = $this->apiService->fetchCurrencies(self::ENDPOINT)) {
             $value->expiresAfter(self::TTL);
             $this->cache->save($value->set($data));
+
             return $value->get();
         }
 
@@ -101,6 +103,7 @@ class CurrencyService implements FetchInterface
     /**
      * @param string $symbol
      * @param string $name
+     *
      * @return Currency
      */
     public function createCurrencyObject(string $symbol, string $name): Currency

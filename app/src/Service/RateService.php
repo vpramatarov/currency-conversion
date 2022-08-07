@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-
 namespace App\Service;
-
 
 use ApiPlatform\Core\Validator\Exception\ValidationException;
 use App\Contracts\FetchItemInterface;
 use App\Entity\Rate;
 use Psr\Cache\CacheItemPoolInterface;
 
-
 class RateService implements FetchItemInterface
 {
-
     private const ENDPOINT = 'timeseries';
 
     private const TTL = 3600; // seconds in hour
@@ -27,8 +23,8 @@ class RateService implements FetchItemInterface
 
     /**
      * @param CacheItemPoolInterface $cache
-     * @param ApiService $apiService
-     * @param CurrencyService $apiLayerCurrencyService
+     * @param ApiService             $apiService
+     * @param CurrencyService        $apiLayerCurrencyService
      */
     public function __construct(
         CacheItemPoolInterface $cache,
@@ -42,7 +38,9 @@ class RateService implements FetchItemInterface
 
     /**
      * @param string $id
+     *
      * @return Rate|null
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -69,7 +67,9 @@ class RateService implements FetchItemInterface
      * Empty array is returned if data could not be retrieved.
      *
      * @param array<int, string> $currencies
+     *
      * @return mixed[]
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -89,6 +89,7 @@ class RateService implements FetchItemInterface
         if ($data = $this->apiService->fetchCurrencyPair($currencies, self::ENDPOINT)) {
             $value->expiresAfter(self::TTL);
             $this->cache->save($value->set($data));
+
             return $value->get();
         }
 
@@ -97,6 +98,7 @@ class RateService implements FetchItemInterface
 
     /**
      * @param array<string, mixed> $ratesData
+     *
      * @return Rate
      */
     private function createRateObject(array $ratesData): Rate
@@ -113,7 +115,9 @@ class RateService implements FetchItemInterface
 
     /**
      * @param string $id
+     *
      * @return void
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
@@ -132,14 +136,14 @@ class RateService implements FetchItemInterface
         $availableCurrencies = $this->currencyService->fetchCurrencies();
 
         $diff = array_diff_key(array_flip($currencies), $availableCurrencies);
-        $validateCurrencies = count($diff) === 0;
+        $validateCurrencies = \count($diff) === 0;
 
         if (!$validateCurrencies) {
             $msg = sprintf(
-                "Please provide valid Currencies. %s %s not a valid %s.",
+                'Please provide valid Currencies. %s %s not a valid %s.',
                 implode(' AND ', array_flip($diff)),
-                count($diff) === 1 ? 'is' : 'are',
-                count($diff) === 1 ? 'Currency' : 'Currencies'
+                \count($diff) === 1 ? 'is' : 'are',
+                \count($diff) === 1 ? 'Currency' : 'Currencies'
             );
 
             throw new ValidationException($msg);

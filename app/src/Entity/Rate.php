@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-
 namespace App\Entity;
-
 
 use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-
 
 /**
  * @ApiResource(
@@ -66,10 +63,10 @@ class Rate
      */
     public string $suffix;
 
-
     /**
      * @Groups({"rate:read"})
      * @Assert\NotBlank()
+     *
      * @return string
      */
     public function getTrend(): string

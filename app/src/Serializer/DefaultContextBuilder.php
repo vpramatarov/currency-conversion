@@ -2,13 +2,10 @@
 
 declare(strict_types=1);
 
-
 namespace App\Serializer;
-
 
 use ApiPlatform\Core\Serializer\SerializerContextBuilderInterface;
 use Symfony\Component\HttpFoundation\Request;
-
 
 final class DefaultContextBuilder implements SerializerContextBuilderInterface
 {
@@ -20,9 +17,10 @@ final class DefaultContextBuilder implements SerializerContextBuilderInterface
     }
 
     /**
-     * @param Request $request
-     * @param bool $normalization
+     * @param Request      $request
+     * @param bool         $normalization
      * @param mixed[]|null $extractedAttributes
+     *
      * @return mixed[]
      */
     public function createFromRequest(Request $request, bool $normalization, ?array $extractedAttributes = null): array

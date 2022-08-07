@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-
 namespace App\DataProvider;
-
 
 use ApiPlatform\Core\DataProvider\ContextAwareCollectionDataProviderInterface;
 use ApiPlatform\Core\DataProvider\ItemDataProviderInterface;
@@ -12,12 +10,9 @@ use ApiPlatform\Core\DataProvider\RestrictedDataProviderInterface;
 use App\Contracts\FetchInterface;
 use App\Entity\Currency;
 
-
 class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCollectionDataProviderInterface, RestrictedDataProviderInterface
 {
-
     private FetchInterface $fetchService;
-
 
     public function __construct(FetchInterface $fetchService)
     {
@@ -25,10 +20,11 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     }
 
     /**
-     * @param string $resourceClass
-     * @param int|string $id
+     * @param string      $resourceClass
+     * @param int|string  $id
      * @param string|null $operationName
-     * @param mixed[] $context
+     * @param mixed[]     $context
+     *
      * @return Currency|null
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Currency
@@ -37,9 +33,10 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     }
 
     /**
-     * @param string $resourceClass
+     * @param string      $resourceClass
      * @param string|null $operationName
-     * @param mixed[] $context
+     * @param mixed[]     $context
+     *
      * @return mixed[]
      */
     public function getCollection(string $resourceClass, string $operationName = null, array $context = []): iterable
@@ -48,9 +45,10 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     }
 
     /**
-     * @param string $resourceClass
+     * @param string      $resourceClass
      * @param string|null $operationName
-     * @param mixed[] $context
+     * @param mixed[]     $context
+     *
      * @return bool
      */
     public function supports(string $resourceClass, string $operationName = null, array $context = []): bool

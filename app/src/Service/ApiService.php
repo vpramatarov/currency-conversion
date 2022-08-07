@@ -2,16 +2,12 @@
 
 declare(strict_types=1);
 
-
 namespace App\Service;
-
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-
 class ApiService
 {
-
     private HttpClientInterface $httpClient;
 
     private HelperService $helperService;
@@ -23,11 +19,13 @@ class ApiService
     }
 
     /**
-     * Fetch data for given currency pair
+     * Fetch data for given currency pair.
      *
      * @param array<int, string> $currencies
-     * @param string $endpoint
+     * @param string             $endpoint
+     *
      * @return array{'pair'?: string, 'base'?: string, 'target'?: string, 'suffix'?: string, 'exchangeRate'?: float}
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
@@ -46,8 +44,8 @@ class ApiService
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                     'symbols' => $currencies[1],
-                    'base' => $currencies[0]
-                ]
+                    'base' => $currencies[0],
+                ],
             ]
         );
 
@@ -73,10 +71,12 @@ class ApiService
     }
 
     /**
-     * Fetch currencies data from API
+     * Fetch currencies data from API.
      *
      * @param string $endpoint
+     *
      * @return array<string, string>
+     *
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
