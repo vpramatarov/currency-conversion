@@ -15,3 +15,7 @@
 8. Run tests: `php bin/phpunit` in root directory
 9. Navigate to `http://localhost/api` for UI
 10. For `pair` in `\api\rates\{pair}` provide 2 ISO currency codes separated by underscore. Ex.: `CAD_CHF`. 
+
+## DEV
+1. [PHPSTAN](https://phpstan.org/user-guide/getting-started) - in root directory `php ./vendor/bin/phpstan analyse` | `php ./vendor/bin/phpstan analyse src`
+2. [PHP Coding Standards Fixer](https://cs.symfony.com/) - in root directory `php ./vendor/bin/php-cs-fixer fix --allow-risky=yes`
