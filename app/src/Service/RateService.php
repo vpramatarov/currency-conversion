@@ -48,7 +48,6 @@ class RateService implements FetchItemInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      * @throws ValidationException
      */
     public function fetchOne($id): ?Rate
@@ -69,14 +68,13 @@ class RateService implements FetchItemInterface
      * If data does not exist in cache, it's saved and returned.
      * Empty array is returned if data could not be retrieved.
      *
-     * @param array $currencies
-     * @return array
+     * @param array<int, string> $currencies
+     * @return mixed[]
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      */
     private function fetchData(array $currencies): array
     {
@@ -98,7 +96,7 @@ class RateService implements FetchItemInterface
     }
 
     /**
-     * @param array $ratesData
+     * @param array<string, mixed> $ratesData
      * @return Rate
      */
     private function createRateObject(array $ratesData): Rate
@@ -121,7 +119,6 @@ class RateService implements FetchItemInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      * @throws ValidationException
      */
     private function validateData(string $id): void

@@ -39,7 +39,6 @@ class CurrencyService implements FetchInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchOne($id): ?Currency
     {
@@ -55,13 +54,12 @@ class CurrencyService implements FetchInterface
     }
 
     /**
-     * @return array
+     * @return array<int, Currency>
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchMany(): array
     {
@@ -76,13 +74,12 @@ class CurrencyService implements FetchInterface
     }
 
     /**
-     * @return array
+     * @return mixed[]
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function fetchCurrencies(): array
     {

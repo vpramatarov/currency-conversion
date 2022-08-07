@@ -21,6 +21,14 @@ class RateServiceTest extends CustomApiTestCase
         $this->regenerateTimeframeFile();
     }
 
+    /**
+     * @return void
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     */
     public function testGetRateRequest()
     {
         $this->client->request('GET', '/api/rates/CAD_CHF');
@@ -28,6 +36,10 @@ class RateServiceTest extends CustomApiTestCase
         $this->assertJsonContains(['@context' => '/api/contexts/Rate', 'base' => 'CAD', 'target' => 'CHF']);
     }
 
+    /**
+     * @return void
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     */
     public function testGetRateRequestCache()
     {
         $cache = $this->getCacheService();
@@ -47,6 +59,14 @@ class RateServiceTest extends CustomApiTestCase
         $cache->deleteItem($key);
     }
 
+    /**
+     * @return void
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     */
     public function testGetRateMalformedRequest()
     {
         $this->client->request('GET', '/api/rates/CA_CHF');
@@ -54,6 +74,14 @@ class RateServiceTest extends CustomApiTestCase
         $this->assertJsonContains(['hydra:description' => 'Please provide valid Currencies. CA is not a valid Currency.']);
     }
 
+    /**
+     * @return void
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     */
     public function testRateNotFound()
     {
         $this->client->request('GET', '/api/rates/ASD_CHF');
@@ -67,7 +95,7 @@ class RateServiceTest extends CustomApiTestCase
      * @param string $start Start date
      * @param string $end End date
      * @param string $format Output format (Default: Y-m-d)
-     * @return array
+     * @return array<int, string>
      * @throws \Exception
      */
     private function generateDatesFromRange(string $start, string $end, string $format = 'Y-m-d'): array

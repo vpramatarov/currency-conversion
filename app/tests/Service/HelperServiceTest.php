@@ -15,6 +15,11 @@ class HelperServiceTest extends CustomApiTestCase
 
     /**
      * @dataProvider getTrendTests
+     *
+     * @param array<int, float> $data
+     * @param float $todayExchangeRate
+     * @param string $expectedValue
+     * @return void
      */
     public function testCalculateTrend(array $data, float $todayExchangeRate, string $expectedValue)
     {
@@ -24,6 +29,9 @@ class HelperServiceTest extends CustomApiTestCase
         $this->assertEquals($expectedValue, $trend);
     }
 
+    /**
+     * @return mixed[]
+     */
     public function getTrendTests(): array
     {
         $data = $this->getRatesTestData();
@@ -38,7 +46,7 @@ class HelperServiceTest extends CustomApiTestCase
     /**
      * Get fake rates data
      *
-     * @return array
+     * @return mixed[]
      */
     private function getRatesTestData(): array
     {

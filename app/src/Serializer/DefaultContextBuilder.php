@@ -19,13 +19,16 @@ final class DefaultContextBuilder implements SerializerContextBuilderInterface
         $this->decorated = $decorated;
     }
 
+    /**
+     * @param Request $request
+     * @param bool $normalization
+     * @param mixed[]|null $extractedAttributes
+     * @return mixed[]
+     */
     public function createFromRequest(Request $request, bool $normalization, ?array $extractedAttributes = null): array
     {
         $context = $this->decorated->createFromRequest($request, $normalization, $extractedAttributes);
-        $className = $request->attributes->get('_api_resource_class');
-        $parts = explode('\\', $className);
-        $entityName = strtoupper(end($parts));
-
+        $entityName = basename(str_replace('\\', '/', $request->attributes->get('_api_resource_class')));
         $provider = sprintf('%s.%s', $entityName, strtoupper($request->get('_provider', 'APILAYER')));
 
         // set provider

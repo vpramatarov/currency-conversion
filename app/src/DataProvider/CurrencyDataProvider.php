@@ -26,9 +26,9 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
 
     /**
      * @param string $resourceClass
-     * @param $id
+     * @param int|string $id
      * @param string|null $operationName
-     * @param array $context
+     * @param mixed[] $context
      * @return Currency|null
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Currency
@@ -39,8 +39,8 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     /**
      * @param string $resourceClass
      * @param string|null $operationName
-     * @param array $context
-     * @return iterable
+     * @param mixed[] $context
+     * @return mixed[]
      */
     public function getCollection(string $resourceClass, string $operationName = null, array $context = []): iterable
     {
@@ -50,7 +50,7 @@ class CurrencyDataProvider implements ItemDataProviderInterface, ContextAwareCol
     /**
      * @param string $resourceClass
      * @param string|null $operationName
-     * @param array $context
+     * @param mixed[] $context
      * @return bool
      */
     public function supports(string $resourceClass, string $operationName = null, array $context = []): bool

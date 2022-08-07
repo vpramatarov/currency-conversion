@@ -8,5 +8,8 @@ namespace App\Contracts;
 
 interface FetchManyInterface
 {
+    /**
+     * @return array<int,object>
+     */
     public function fetchMany(): array;
 }

@@ -24,6 +24,12 @@ final class ApiServiceMock extends MockHttpClient
         parent::__construct($callback, $this->baseUri);
     }
 
+    /**
+     * @param string $method
+     * @param string $url
+     * @return MockResponse
+     * @throws \JsonException
+     */
     private function handleRequests(string $method, string $url): MockResponse
     {
         if ($method === 'GET' && str_starts_with($url, $this->baseUri.'/symbols')) {
@@ -40,6 +46,7 @@ final class ApiServiceMock extends MockHttpClient
     /**
      * "/symbols" endpoint.
      *
+     * @return MockResponse
      * @throws \JsonException
      */
     private function getCurrenciesMock(): MockResponse
@@ -55,6 +62,7 @@ final class ApiServiceMock extends MockHttpClient
     /**
      * "/timeseries" endpoint.
      *
+     * @return MockResponse
      * @throws \JsonException
      */
     private function getRatesMock(): MockResponse

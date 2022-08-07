@@ -25,9 +25,9 @@ class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProvi
 
     /**
      * @param string $resourceClass
-     * @param $id
+     * @param string|int $id
      * @param string|null $operationName
-     * @param array $context
+     * @param mixed[] $context
      * @return Rate|null
      */
     public function getItem(string $resourceClass, $id, string $operationName = null, array $context = []): ?Rate
@@ -38,7 +38,7 @@ class RateDataProvider implements ItemDataProviderInterface, RestrictedDataProvi
     /**
      * @param string $resourceClass
      * @param string|null $operationName
-     * @param array $context
+     * @param mixed[] $context
      * @return bool
      */
     public function supports(string $resourceClass, string $operationName = null, array $context = []): bool

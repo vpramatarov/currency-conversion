@@ -9,7 +9,7 @@ namespace App\Service;
 class HelperService
 {
     /**
-     * @param array $data
+     * @param array<int, float> $data
      * @param float $todayExchangeRate
      * @return string
      */
@@ -31,7 +31,7 @@ class HelperService
     /**
      * Calculate average in array
      *
-     * @param array $data
+     * @param array<int, float> $data
      * @return float
      */
     private function arrayAverage(array $data): float

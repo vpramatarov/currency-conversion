@@ -25,9 +25,9 @@ class ApiService
     /**
      * Fetch data for given currency pair
      *
-     * @param array $currencies
+     * @param array<int, string> $currencies
      * @param string $endpoint
-     * @return array
+     * @return array{'pair'?: string, 'base'?: string, 'target'?: string, 'suffix'?: string, 'exchangeRate'?: float}
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
@@ -53,7 +53,6 @@ class ApiService
 
         $data = json_decode($response->getContent(), true);
         $ratesData = $data['rates'] ?? [];
-
         $pairKey = $currencies[1];
         $endDate = (new \DateTime('now'))->format('Y-m-d');
         $todayRate = $ratesData[$endDate] ?? [];
@@ -77,7 +76,7 @@ class ApiService
      * Fetch currencies data from API
      *
      * @param string $endpoint
-     * @return array
+     * @return array<string, string>
      * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
