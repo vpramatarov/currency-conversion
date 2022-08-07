@@ -12,6 +12,7 @@ $finder = (new PhpCsFixer\Finder())
 return (new PhpCsFixer\Config())
             ->setRules([
                '@Symfony' => true,
+               'no_superfluous_phpdoc_tags' => false,
                'array_syntax' => ['syntax' => 'short'],
                'declare_strict_types' => true,
                'php_unit_fqcn_annotation' => false,
